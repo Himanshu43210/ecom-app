@@ -1,0 +1,1 @@
+export const SERVER_BASE_URL = "https://ecom-app-cyaw.onrender.com"
