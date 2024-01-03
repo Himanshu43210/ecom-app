@@ -15,7 +15,7 @@ const CreateCategory = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post("/api/v1/category/create-category", {
+      const { data } = await axios.post("https://ecom-app-cyaw.onrender.com"+"/api/v1/category/create-category", {
         name,
       });
       if (data?.success) {
@@ -33,7 +33,7 @@ const CreateCategory = () => {
   //get all cat
   const getAllCategory = async () => {
     try {
-      const { data } = await axios.get("/api/v1/category/get-category");
+      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com"+"/api/v1/category/get-category");
       if (data?.success) {
         setCategories(data?.category);
       }
@@ -51,7 +51,7 @@ const CreateCategory = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.put(
+      const { data } = await axios.put("https://ecom-app-cyaw.onrender.com"+
         `/api/v1/category/update-category/${selected._id}`,
         { name: updatedName }
       );
@@ -71,7 +71,7 @@ const CreateCategory = () => {
   //delete category
   const handleDelete = async (pId) => {
     try {
-      const { data } = await axios.delete(
+      const { data } = await axios.delete("https://ecom-app-cyaw.onrender.com"+
         `/api/v1/category/delete-category/${pId}`
       );
       if (data.success) {

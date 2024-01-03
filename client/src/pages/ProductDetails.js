@@ -17,7 +17,7 @@ const ProductDetails = () => {
   //getProduct
   const getProduct = async () => {
     try {
-      const { data } = await axios.get(
+      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com"+
         `/api/v1/product/get-product/${params.slug}`
       );
       setProduct(data?.product);
@@ -29,7 +29,7 @@ const ProductDetails = () => {
   //get similar product
   const getSimilarProduct = async (pid, cid) => {
     try {
-      const { data } = await axios.get(
+      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com"+
         `/api/v1/product/related-product/${pid}/${cid}`
       );
       setRelatedProducts(data?.products);

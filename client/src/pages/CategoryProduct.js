@@ -14,7 +14,7 @@ const CategoryProduct = () => {
   }, [params?.slug]);
   const getPrductsByCat = async () => {
     try {
-      const { data } = await axios.get(
+      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com" +
         `/api/v1/product/product-category/${params.slug}`
       );
       setProducts(data?.products);
