@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import Layout from "./../components/Layout/Layout";
 import { AiOutlineReload } from "react-icons/ai";
 import "../styles/Homepage.css";
+import Assistant from "../components/assistant";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const HomePage = () => {
   //get all cat
   const getAllCategory = async () => {
     try {
-      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com"+"/api/v1/category/get-category");
+      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com" + "/api/v1/category/get-category");
       if (data?.success) {
         setCategories(data?.category);
       }
@@ -40,7 +41,7 @@ const HomePage = () => {
   const getAllProducts = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com"+`/api/v1/product/product-list/${page}`);
+      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com" + `/api/v1/product/product-list/${page}`);
       setLoading(false);
       setProducts(data.products);
     } catch (error) {
@@ -52,7 +53,7 @@ const HomePage = () => {
   //getTOtal COunt
   const getTotal = async () => {
     try {
-      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com"+"/api/v1/product/product-count");
+      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com" + "/api/v1/product/product-count");
       setTotal(data?.total);
     } catch (error) {
       console.log(error);
@@ -67,7 +68,7 @@ const HomePage = () => {
   const loadMore = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com"+`/api/v1/product/product-list/${page}`);
+      const { data } = await axios.get("https://ecom-app-cyaw.onrender.com" + `/api/v1/product/product-list/${page}`);
       setLoading(false);
       setProducts([...products, ...data?.products]);
     } catch (error) {
@@ -97,7 +98,7 @@ const HomePage = () => {
   //get filterd product
   const filterProduct = async () => {
     try {
-      const { data } = await axios.post("https://ecom-app-cyaw.onrender.com"+"/api/v1/product/product-filters", {
+      const { data } = await axios.post("https://ecom-app-cyaw.onrender.com" + "/api/v1/product/product-filters", {
         checked,
         radio,
       });
@@ -108,14 +109,13 @@ const HomePage = () => {
   };
   return (
     <Layout title={"ALl Products - Best offers "}>
-      {/* banner image */}
       <img
         src="/images/banner.png"
         className="banner-img"
         alt="bannerimage"
         width={"100%"}
       />
-      {/* banner image */}
+      <Assistant />
       <div className="container-fluid row mt-3 home-page">
         <div className="col-md-3 filters">
           <h4 className="text-center">Filter By Category</h4>

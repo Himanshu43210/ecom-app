@@ -1,10 +1,47 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Layout from "./../components/Layout/Layout";
 import { useSearch } from "../context/search";
+import axios from "axios";
+import { useLocation } from "react-router-dom";
+
 const Search = () => {
   const [values, setValues] = useSearch();
+  const location = useLocation();
+
+  useEffect(() => {
+    const getQueryParam = (param) => {
+      const searchParams = new URLSearchParams(location.search);
+      return searchParams.get(param);
+    };
+    const fetchData = async () => {
+      try {
+        // Get the value of the 'title' query parameter from the URL
+        const titleFromUrl = getQueryParam("title");
+
+        // If the title is present in the URL, make the API call
+        if (titleFromUrl) {
+          const { data } = await axios.get(
+            "https://ecom-app-cyaw.onrender.com" +
+            `/api/v1/product/search/${titleFromUrl}`
+          );
+
+          // Update state with the keyword and results
+          setValues({ keyword: titleFromUrl, results: data });
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    if (location.search) {
+      fetchData(); // Call the fetchData function when the component mounts
+    }
+  }, [location.search, setValues]);
+
   return (
     <Layout title={"Search results"}>
+      {
+        console.log(values)
+      }
       <div className="container">
         <div className="text-center">
           <h1>Search Resuts</h1>
