@@ -8,6 +8,7 @@
     "start": "node server.js",
     "server": "nodemon server.js",
     "client": "npm start --prefix ./client",
+    "socketdev": "nodemon webSocketConnection.cjs",
     "dev": "concurrently \"npm run server\" \"npm run client\""
   },
   "keywords": [],

@@ -1,136 +1,223 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
-
+import "../styles/assistant.css";
+import { GiRobotAntennas } from "react-icons/gi";
 
 export default function Affirmation() {
     const [affirmation, setAffirmation] = useState('')
     const [finalAffirmation, setFinalAffirmation] = useState(false)
     const [result, setResult] = useState(null);
-    const socketRef = useRef(null)
+    const socketRef = useRef();
+    const mediaRecorderRef = useRef(null);
+    const [botState, setBotState] = useState("Connecting...");
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         setAffirmation(e.target.value)
     }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const readOutAffirmation = () => {
+        const synth = window.speechSynthesis;
 
-        // Make the API call
-        const response = await fetch('https://ecom-app-cyaw.onrender.com/askFromAssitant', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                session_id: '4321',
-                user_question: affirmation,
-            }),
-        });
-
-        // Parse the response
-        const data = await response.json();
-        console.log(data)
-        navigate(`/search?title=${data.title}`)
-        // Update the result state
-        setResult(data);
-
-        // Set finalAffirmation to true
-        setFinalAffirmation(true);
+        if (synth) {
+            const utterance = new SpeechSynthesisUtterance(affirmation);
+            synth.speak(utterance);
+        }
     };
 
-    const activateMicrophone = () => {
+    // Function to log the new value of affirmation when it changes
+    const handleAffirmationChange = (newAffirmation) => {
+        console.log('Affirmation changed:', newAffirmation);
+        readOutAffirmation();
+    };
 
-        console.log('Submit')
+    // useEffect(() => {
+    //     handleAffirmationChange(affirmation);
+    // }, [affirmation]);
 
-        //Add microphone access
-        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-            if (!MediaRecorder.isTypeSupported('audio/webm'))
-                return alert('Browser not supported')
-            const mediaRecorder = new MediaRecorder(stream, {
-                mimeType: 'audio/webm',
-            })
-
-            //create a websocket connection
-            const socket = new WebSocket('ws://localhost:3002')
-            socket.onopen = () => {
-                console.log({ event: 'onopen' })
-                mediaRecorder.addEventListener('dataavailable', async (event) => {
-                    if (event.data.size > 0 && socket.readyState === 1) {
-                        socket.send(event.data)
-                    }
-                })
-                mediaRecorder.start(1000)
+    useEffect(() => {
+        // Create WebSocket connection when component mounts
+        createSocket();
+        return () => {
+            // Close WebSocket connection when component unmounts
+            if (socketRef.current) {
+                socketRef.current.close();
             }
+        };
+    }, []);
 
-            socket.onmessage = (message) => {
-                const received = JSON.parse(message.data)
-                const transcript = received.channel.alternatives[0].transcript
-                if (transcript) {
-                    console.log(transcript)
-                    setAffirmation(transcript)
-                }
+    const createSocket = () => {
+        console.log("create socket called")
+        const socket = new WebSocket('ws://localhost:3002');
+        socket.onopen = () => {
+            console.log({ event: 'onopen' });
+            setBotState("Ready!");
+            //socket.send('Connection established');
+        };
+
+        socket.onmessage = (message) => {
+            const received = JSON.parse(message.data);
+            const transcript = received.channel.alternatives[0].transcript;
+            if (transcript) {
+                console.log(transcript);
+                setAffirmation(transcript);
+                setBotState("Complteted");
             }
+        };
 
-            socket.onclose = () => {
-                console.log({ event: 'onclose' })
-            }
+        socket.onclose = () => {
+            console.log({ event: 'onclose' });
+            setBotState("Click to Reload");
+        };
 
-            socket.onerror = (error) => {
-                console.log({ event: 'onerror', error })
-            }
+        socket.onerror = (error) => {
+            console.log({ event: 'onerror', error });
+            setBotState("Click to Reload");
+        };
 
-            socketRef.current = socket
-        })
+        socketRef.current = socket;
+        startRecording();
     }
 
+    const startRecording = () => {
+        // Add microphone access
+        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+            if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                return alert('Browser not supported');
+            }
+
+            const mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'audio/webm',
+            });
+
+            // mediaRecorder.addEventListener('dataavailable', async (event) => {
+            //     if (event.data.size > 0 && socketRef.current.readyState === 1) {
+            //         console.log(event.data);
+            //         socketRef.current.send(event.data);
+            //         setBotState("Listening...");
+            //         console.log("sending data");
+            //     }
+            // });
+
+            // mediaRecorder.start(2000);
+            // mediaRecorderRef.current = mediaRecorder;
+            let chunks; // Store recorded audio chunks
+
+            mediaRecorder.addEventListener('dataavailable', async (event) => {
+                chunks = event.data;
+                socketRef.current.send(event.data);
+                setBotState("Processing...");
+                console.log(chunks);
+            });
+
+            mediaRecorder.start();
+            setBotState("Listening...");
+
+            let isSpeaking = true; // Flag to track if the user is speaking
+
+            // Set a timeout to stop recording after 5 seconds
+            setTimeout(() => {
+                mediaRecorder.stop();
+                isSpeaking = false; // User has stopped speaking
+                setBotState("Sending data...");
+                if(socketRef.current.readyState === 1){
+                    console.log(chunks);
+                }else{
+                    console.log("failed");
+                }
+            }, 10000); // Stop recording after 5 seconds
+
+            mediaRecorderRef.current = mediaRecorder;
+        });
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current) {
+            mediaRecorderRef.current.stop();            
+        }
+    };
+
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+
+    //     // Make the API call
+    //     const response = await fetch('https://ecom-app-cyaw.onrender.com/askFromAssitant', {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //         },
+    //         body: JSON.stringify({
+    //             session_id: '4321',
+    //             user_question: affirmation,
+    //         }),
+    //     });
+
+    //     // Parse the response
+    //     const data = await response.json();
+    //     console.log(data)
+    //     navigate(`/search?title=${data.title}`)
+    //     // Update the result state
+    //     setResult(data);
+
+    //     // Set finalAffirmation to true
+    //     setFinalAffirmation(true);
+    // };
+
+    // const activateMicrophone = () => {
+
+    //     console.log('Submit')
+
+    //     //Add microphone access
+    //     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+    //         if (!MediaRecorder.isTypeSupported('audio/webm'))
+    //             return alert('Browser not supported')
+    //         const mediaRecorder = new MediaRecorder(stream, {
+    //             mimeType: 'audio/webm',
+    //         })
+
+    //         //create a websocket connection
+    //         const socket = new WebSocket('ws://localhost:3002')
+    //         socket.onopen = () => {
+    //             console.log({ event: 'onopen' })
+    //             mediaRecorder.addEventListener('dataavailable', async (event) => {
+    //                 if (event.data.size > 0 && socket.readyState === 1) {
+    //                     socket.send(event.data)
+    //                 }
+    //             })
+    //             mediaRecorder.start(1000)
+    //         }
+
+    //         socket.onmessage = (message) => {
+    //             const received = JSON.parse(message.data)
+    //             const transcript = received.channel.alternatives[0].transcript
+    //             if (transcript) {
+    //                 console.log(transcript)
+    //                 setAffirmation(transcript)
+    //             }
+    //         }
+
+    //         socket.onclose = () => {
+    //             console.log({ event: 'onclose' })
+    //         }
+
+    //         socket.onerror = (error) => {
+    //             console.log({ event: 'onerror', error })
+    //         }
+    //         socketRef.current = socket
+    //     })
+    // }
+
     return (
-        <div className='App'>
-            <div className="card ">
-                <div className='container'>
-
-
-                    <div className='journal-body'>
-                        {!finalAffirmation ? (
-                            <>
-                                <div className='description'>
-                                    What affirmation do you want to give to yourself today?
-                                </div>
-                                <form onSubmit={handleSubmit}>
-                                    <textarea
-                                        className='journal-input'
-                                        value={affirmation}
-                                        onChange={handleChange}
-                                    />
-                                    <br />
-                                    <button
-                                        type='submit'
-                                        className='submit-button'
-                                        disabled={affirmation.length === 0}>
-                                        Submit
-                                    </button>
-
-                                    <button
-                                        onClick={activateMicrophone}
-                                        type='button'
-                                        className='submit-button'>
-                                        Voice 💬
-                                    </button>
-
-                                </form>
-                            </>
-                        ) : (
-                            <>
-                                Loading....
-                                {result && (
-                                    <div>
-                                        <p>{result.title}</p>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                </div>
+        <div className='assistant_wrap'>
+            <div className='bot_box'>
+                <button className={`bot_img ${botState === "Click to Reload" && "rotate"}`} 
+                    disabled={botState !== "Click to Reload"} onClick={createSocket}
+                >
+                    <GiRobotAntennas size={40}/>
+                </button>
+                {/* <button onClick={startRecording}>Start Recording</button>
+                <button onClick={stopRecording}>Stop Recording</button> */}
+                <p>{botState}</p>
             </div>
         </div>
     )

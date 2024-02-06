@@ -1,0 +1,50 @@
+.assistant_wrap{
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    width: fit-content;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.bot_box{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.bot_img{
+    border: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #ff4d4f;
+    background-color: white;
+    border-radius: 100%;
+    box-shadow: 1px 1px 5px 2px rgba(0, 0, 0, 0.158), -1px -1px 2px 0px rgba(0, 0, 0, 0.034);
+    padding: 10px;
+    transition: transform 0.5s ease-in-out;
+}
+
+.bot_box p{
+    background-color: white;
+    color: rgba(0, 0, 0, 0.484);
+    font-size: .7rem;
+    font-weight: bold;
+    margin-top: 7px;
+    box-shadow: 1px 1px 5px 2px rgba(0, 0, 0, 0.158), -1px -1px 2px 0px rgba(0, 0, 0, 0.034);
+    border-radius: .75rem;
+    padding: 2px 15px;
+}
+
+.rotate {
+    transform: rotate(55deg); /* Diagonal cross */
+}
