@@ -58,6 +58,7 @@ const keywordGenerator = async (payload) => {
   if(!payload){
     return;
   }
+  console.log("to -> Gpt");
   const openai = new OpenAIAPI({ key: process.env.OPENAI_API_KEY });
   try {
     const userQuery = payload;
@@ -71,8 +72,11 @@ const keywordGenerator = async (payload) => {
       messages: [{ role: "user", content: prompt }],
       model: "gpt-3.5-turbo",
     });
-    const extractedInfo = extractInfoFromResponse(response.choices[0]?.message?.content || "");
-    console.log(extractedInfo);
+    //const extractedInfo = extractInfoFromResponse(response.choices[0]?.message?.content || "");
+    if( response && response.choices && response.choices[0] && response.choices[0].message){
+      console.log(response.choices[0].message);
+      console.log(response.usage);
+    }
     //when we get keyword we search in database and if find something we will return data here.
   } catch (error) {
     console.error('Error processing query:', error);
