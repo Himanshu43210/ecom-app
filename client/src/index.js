@@ -8,9 +8,15 @@ import { AuthProvider } from "./context/auth";
 import { SearchProvider } from "./context/search";
 import { CartProvider } from "./context/cart";
 import "antd/dist/reset.css";
+import { Provider } from 'react-redux';
+import store from "./store/index";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+
+
+
 root.render(
+  <Provider store={store}>
   <AuthProvider>
     <SearchProvider>
       <CartProvider>
@@ -20,6 +26,8 @@ root.render(
       </CartProvider>
     </SearchProvider>
   </AuthProvider>
+  </Provider>
+  
 );
 
 // If you want to start measuring performance in your app, pass a function

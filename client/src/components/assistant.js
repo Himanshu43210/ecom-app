@@ -1,7 +1,12 @@
-import { useState, useRef, useEffect } from 'react'
+import React from "react";
+import ReactDOM from "react-dom";
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { assistantActions } from "../store/slices/assistant-slice";
 import "../styles/assistant.css";
 import { GiRobotAntennas } from "react-icons/gi";
+
 
 export default function Affirmation() {
     const [affirmation, setAffirmation] = useState('')
@@ -11,37 +16,40 @@ export default function Affirmation() {
     const mediaRecorderRef = useRef(null);
     const [botState, setBotState] = useState("Connecting...");
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const handleChange = (e) => {
         setAffirmation(e.target.value)
     }
 
-    const readOutAffirmation = () => {
-        const synth = window.speechSynthesis;
+    // const readOutAffirmation = () => {
+    //     const synth = window.speechSynthesis;
 
-        if (synth) {
-            const utterance = new SpeechSynthesisUtterance(affirmation);
-            synth.speak(utterance);
-        }
-    };
+    //     if (synth) {
+    //         const utterance = new SpeechSynthesisUtterance(affirmation);
+    //         synth.speak(utterance);
+    //     }
+    // };
 
-    // Function to log the new value of affirmation when it changes
-    const handleAffirmationChange = (newAffirmation) => {
-        console.log('Affirmation changed:', newAffirmation);
-        readOutAffirmation();
-    };
+    // // Function to log the new value of affirmation when it changes
+    // const handleAffirmationChange = (newAffirmation) => {
+    //     console.log('Affirmation changed:', newAffirmation);
+    //     readOutAffirmation();
+    // };
 
     // useEffect(() => {
     //     handleAffirmationChange(affirmation);
     // }, [affirmation]);
 
     useEffect(() => {
+        console.log("assistant loaded");
         // Create WebSocket connection when component mounts
         createSocket();
         return () => {
             // Close WebSocket connection when component unmounts
             if (socketRef.current) {
                 socketRef.current.close();
+                console.log("assistant closed");
             }
         };
     }, []);
@@ -56,11 +64,14 @@ export default function Affirmation() {
         };
 
         socket.onmessage = (message) => {
-            const received = JSON.parse(message.data);
-            const transcript = received.channel.alternatives[0].transcript;
+            //const received = JSON.parse(message.data);
+            const transcript = message.data //received.channel.alternatives[0].transcript;
             if (transcript) {
                 console.log(transcript);
                 setAffirmation(transcript);
+                dispatch(
+                    assistantActions.fetchResponse(transcript)   
+                )
                 setBotState("Complteted");
             }
         };
@@ -90,44 +101,44 @@ export default function Affirmation() {
                 mimeType: 'audio/webm',
             });
 
-            // mediaRecorder.addEventListener('dataavailable', async (event) => {
-            //     if (event.data.size > 0 && socketRef.current.readyState === 1) {
-            //         console.log(event.data);
-            //         socketRef.current.send(event.data);
-            //         setBotState("Listening...");
-            //         console.log("sending data");
-            //     }
-            // });
-
-            // mediaRecorder.start(2000);
-            // mediaRecorderRef.current = mediaRecorder;
-            let chunks; // Store recorded audio chunks
-
             mediaRecorder.addEventListener('dataavailable', async (event) => {
-                chunks = event.data;
-                socketRef.current.send(event.data);
-                setBotState("Processing...");
-                console.log(chunks);
+                if (event.data.size > 0 && socketRef.current.readyState === 1) {
+                    console.log(event.data);
+                    socketRef.current.send(event.data);
+                    setBotState("Listening...");
+                    console.log("sending data");
+                }
             });
 
-            mediaRecorder.start();
-            setBotState("Listening...");
-
-            let isSpeaking = true; // Flag to track if the user is speaking
-
-            // Set a timeout to stop recording after 5 seconds
-            setTimeout(() => {
-                mediaRecorder.stop();
-                isSpeaking = false; // User has stopped speaking
-                setBotState("Sending data...");
-                if(socketRef.current.readyState === 1){
-                    console.log(chunks);
-                }else{
-                    console.log("failed");
-                }
-            }, 10000); // Stop recording after 5 seconds
-
+            mediaRecorder.start(1000);
             mediaRecorderRef.current = mediaRecorder;
+            // let chunks; // Store recorded audio chunks
+
+            // mediaRecorder.addEventListener('dataavailable', async (event) => {
+            //     chunks = event.data;
+            //     socketRef.current.send(event.data);
+            //     setBotState("Processing...");
+            //     console.log(chunks);
+            // });
+
+            // mediaRecorder.start();
+            // setBotState("Listening...");
+
+            // let isSpeaking = true; // Flag to track if the user is speaking
+
+            // // Set a timeout to stop recording after 5 seconds
+            // setTimeout(() => {
+            //     mediaRecorder.stop();
+            //     isSpeaking = false; // User has stopped speaking
+            //     setBotState("Sending data...");
+            //     if(socketRef.current.readyState === 1){
+            //         console.log(chunks);
+            //     }else{
+            //         console.log("failed");
+            //     }
+            // }, 10000); // Stop recording after 5 seconds
+
+            // mediaRecorderRef.current = mediaRecorder;
         });
     };
 
@@ -136,32 +147,6 @@ export default function Affirmation() {
             mediaRecorderRef.current.stop();            
         }
     };
-
-    // const handleSubmit = async (e) => {
-    //     e.preventDefault();
-
-    //     // Make the API call
-    //     const response = await fetch('https://ecom-app-cyaw.onrender.com/askFromAssitant', {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //         },
-    //         body: JSON.stringify({
-    //             session_id: '4321',
-    //             user_question: affirmation,
-    //         }),
-    //     });
-
-    //     // Parse the response
-    //     const data = await response.json();
-    //     console.log(data)
-    //     navigate(`/search?title=${data.title}`)
-    //     // Update the result state
-    //     setResult(data);
-
-    //     // Set finalAffirmation to true
-    //     setFinalAffirmation(true);
-    // };
 
     // const activateMicrophone = () => {
 
@@ -207,7 +192,7 @@ export default function Affirmation() {
     //     })
     // }
 
-    return (
+    return ReactDOM.createPortal(
         <div className='assistant_wrap'>
             <div className='bot_box'>
                 <button className={`bot_img ${botState === "Click to Reload" && "rotate"}`} 
@@ -220,5 +205,5 @@ export default function Affirmation() {
                 <p>{botState}</p>
             </div>
         </div>
-    )
+    , document.getElementById("assistant-hook") )
 }
