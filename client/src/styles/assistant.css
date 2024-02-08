@@ -48,3 +48,9 @@
 .rotate {
     transform: rotate(55deg); /* Diagonal cross */
 }
+
+#audioPlayer{
+    visibility: hidden;
+    position: fixed;
+    top: -200px;
+}
