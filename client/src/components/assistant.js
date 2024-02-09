@@ -1,209 +1,198 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import { assistantActions } from "../store/slices/assistant-slice";
 import "../styles/assistant.css";
 import { GiRobotAntennas } from "react-icons/gi";
 
-
 export default function Affirmation() {
-    const [affirmation, setAffirmation] = useState('')
-    const [finalAffirmation, setFinalAffirmation] = useState(false)
-    const [result, setResult] = useState(null);
-    const socketRef = useRef();
-    const mediaRecorderRef = useRef(null);
-    const [botState, setBotState] = useState("Connecting...");
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
 
-    const handleChange = (e) => {
-        setAffirmation(e.target.value)
+  const [affirmation, setAffirmation] = useState("");
+  const [finalAffirmation, setFinalAffirmation] = useState(false);
+  const [result, setResult] = useState(null);
+  const socketRef = useRef();
+  const mediaRecorderRef = useRef(null);
+  const speakerOnRef = useRef(false);
+  const audioRef = useRef(null);
+  const [audioLink, setAudioLink] = useState("");
+  const [botState, setBotState] = useState("Connecting...");
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleChange = (e) => {
+    setAffirmation(e.target.value);
+  };
+
+//   const readOutAffirmation = (mainCont) => {
+//     speakerOnRef.current = true;
+//     console.log(speakerOnRef.current);
+//     const synth = window.speechSynthesis;
+//     if (synth) {
+//       const utterance = new SpeechSynthesisUtterance(mainCont);
+//       utterance.onend = () => {
+//           // Set speakerOnRef to false after speaking is completed
+//           speakerOnRef.current = false;
+//           console.log(speakerOnRef.current);
+//         };
+//       synth.speak(utterance);
+//     }
+//   };
+
+  useEffect(() => {
+    if(audioLink){
+        speakerOnRef.current = true;
+        audioRef.current.play();
     }
+  }, [audioLink])
 
-    // const readOutAffirmation = () => {
-    //     const synth = window.speechSynthesis;
+  const handleEnded = () => {
+    speakerOnRef.current = false;
+  };
 
-    //     if (synth) {
-    //         const utterance = new SpeechSynthesisUtterance(affirmation);
-    //         synth.speak(utterance);
-    //     }
-    // };
+  useEffect(() => {
+    console.log("assistant loaded");
+    // Create WebSocket connection when component mounts
+    createSocket();
+    return () => {
+      // Close WebSocket connection when component unmounts
+      if (socketRef.current) {
+        socketRef.current.close();
+        console.log("assistant closed");
+      }
+    };
+  }, []);
 
-    // // Function to log the new value of affirmation when it changes
-    // const handleAffirmationChange = (newAffirmation) => {
-    //     console.log('Affirmation changed:', newAffirmation);
-    //     readOutAffirmation();
-    // };
-
-    // useEffect(() => {
-    //     handleAffirmationChange(affirmation);
-    // }, [affirmation]);
-
-    useEffect(() => {
-        console.log("assistant loaded");
-        // Create WebSocket connection when component mounts
-        createSocket();
-        return () => {
-            // Close WebSocket connection when component unmounts
-            if (socketRef.current) {
-                socketRef.current.close();
-                console.log("assistant closed");
-            }
-        };
-    }, []);
-
-    const createSocket = () => {
-        console.log("create socket called")
-        const socket = new WebSocket('ws://localhost:3002');
-        socket.onopen = () => {
-            console.log({ event: 'onopen' });
-            setBotState("Ready!");
-            //socket.send('Connection established');
-        };
-
-        socket.onmessage = (message) => {
-            //const received = JSON.parse(message.data);
-            const transcript = message.data //received.channel.alternatives[0].transcript;
-            if (transcript) {
-                console.log(transcript);
-                setAffirmation(transcript);
-                dispatch(
-                    assistantActions.fetchResponse(transcript)   
-                )
-                setBotState("Complteted");
-            }
-        };
-
-        socket.onclose = () => {
-            console.log({ event: 'onclose' });
-            setBotState("Click to Reload");
-        };
-
-        socket.onerror = (error) => {
-            console.log({ event: 'onerror', error });
-            setBotState("Click to Reload");
-        };
-
-        socketRef.current = socket;
-        startRecording();
-    }
-
-    const startRecording = () => {
-        // Add microphone access
-        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-            if (!MediaRecorder.isTypeSupported('audio/webm')) {
-                return alert('Browser not supported');
-            }
-
-            const mediaRecorder = new MediaRecorder(stream, {
-                mimeType: 'audio/webm',
-            });
-
-            mediaRecorder.addEventListener('dataavailable', async (event) => {
-                if (event.data.size > 0 && socketRef.current.readyState === 1) {
-                    console.log(event.data);
-                    socketRef.current.send(event.data);
-                    setBotState("Listening...");
-                    console.log("sending data");
-                }
-            });
-
-            mediaRecorder.start(1000);
-            mediaRecorderRef.current = mediaRecorder;
-            // let chunks; // Store recorded audio chunks
-
-            // mediaRecorder.addEventListener('dataavailable', async (event) => {
-            //     chunks = event.data;
-            //     socketRef.current.send(event.data);
-            //     setBotState("Processing...");
-            //     console.log(chunks);
-            // });
-
-            // mediaRecorder.start();
-            // setBotState("Listening...");
-
-            // let isSpeaking = true; // Flag to track if the user is speaking
-
-            // // Set a timeout to stop recording after 5 seconds
-            // setTimeout(() => {
-            //     mediaRecorder.stop();
-            //     isSpeaking = false; // User has stopped speaking
-            //     setBotState("Sending data...");
-            //     if(socketRef.current.readyState === 1){
-            //         console.log(chunks);
-            //     }else{
-            //         console.log("failed");
-            //     }
-            // }, 10000); // Stop recording after 5 seconds
-
-            // mediaRecorderRef.current = mediaRecorder;
-        });
+  const createSocket = () => {
+    console.log("create socket called");
+    const socket = new WebSocket("ws://localhost:3002");
+    socket.onopen = () => {
+      console.log({ event: "onopen" });
+      setBotState("Ready!");
+      //socket.send('Connection established');
     };
 
-    const stopRecording = () => {
-        if (mediaRecorderRef.current) {
-            mediaRecorderRef.current.stop();            
+    socket.onmessage = (message) => {
+      //const received = JSON.parse(message.data);
+      const transcript = message.data; //received.channel.alternatives[0].transcript;
+      if (transcript) {
+        const spaceIndex = transcript.indexOf(" ");
+        const type = transcript.substring(0, spaceIndex);
+        const mainCont = transcript.substring(spaceIndex + 1).trim();
+
+        if(transcript === "failed"){
+            createSocket();
+            return;
         }
+
+        if (type === "navigation:") {
+          navigate(mainCont);
+        } else if (type === "search:") {
+            navigate(`/search?title=${mainCont}`);
+        } else {
+            setAudioLink(transcript);
+        }
+        console.log(transcript);
+        setAffirmation(transcript);
+        dispatch(assistantActions.fetchResponse(transcript));
+        setBotState("Complteted");
+      }
     };
 
-    // const activateMicrophone = () => {
+    socket.onclose = () => {
+      console.log({ event: "onclose" });
+      setBotState("Click to Reload");
+    };
 
-    //     console.log('Submit')
+    socket.onerror = (error) => {
+      console.log({ event: "onerror", error });
+      setBotState("Click to Reload");
+    };
 
-    //     //Add microphone access
-    //     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-    //         if (!MediaRecorder.isTypeSupported('audio/webm'))
-    //             return alert('Browser not supported')
-    //         const mediaRecorder = new MediaRecorder(stream, {
-    //             mimeType: 'audio/webm',
-    //         })
+    socketRef.current = socket;
+    startRecording();
+  };
 
-    //         //create a websocket connection
-    //         const socket = new WebSocket('ws://localhost:3002')
-    //         socket.onopen = () => {
-    //             console.log({ event: 'onopen' })
-    //             mediaRecorder.addEventListener('dataavailable', async (event) => {
-    //                 if (event.data.size > 0 && socket.readyState === 1) {
-    //                     socket.send(event.data)
-    //                 }
-    //             })
-    //             mediaRecorder.start(1000)
-    //         }
+  const startRecording = () => {
+    // Add microphone access
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      if (!MediaRecorder.isTypeSupported("audio/webm")) {
+        return alert("Browser not supported");
+      }
 
-    //         socket.onmessage = (message) => {
-    //             const received = JSON.parse(message.data)
-    //             const transcript = received.channel.alternatives[0].transcript
-    //             if (transcript) {
-    //                 console.log(transcript)
-    //                 setAffirmation(transcript)
-    //             }
-    //         }
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "audio/webm",
+      });
 
-    //         socket.onclose = () => {
-    //             console.log({ event: 'onclose' })
-    //         }
+      mediaRecorder.addEventListener("dataavailable", async (event) => {
+        if (event.data.size > 0 && socketRef.current.readyState === 1 && !speakerOnRef.current) {
+          console.log(event.data);
+          socketRef.current.send(event.data);
+          setBotState("Listening...");
+          console.log("sending data");
+        }else if(socketRef.current.readyState === 1){
+            socketRef.current.send("pause");
+            setBotState("Speaking...");
+        }
+      });
 
-    //         socket.onerror = (error) => {
-    //             console.log({ event: 'onerror', error })
-    //         }
-    //         socketRef.current = socket
-    //     })
-    // }
+      mediaRecorder.start(2000);
+      mediaRecorderRef.current = mediaRecorder;
+      // let chunks; // Store recorded audio chunks
 
-    return ReactDOM.createPortal(
-        <div className='assistant_wrap'>
-            <div className='bot_box'>
-                <button className={`bot_img ${botState === "Click to Reload" && "rotate"}`} 
-                    disabled={botState !== "Click to Reload"} onClick={createSocket}
-                >
-                    <GiRobotAntennas size={40}/>
-                </button>
-                {/* <button onClick={startRecording}>Start Recording</button>
+      // mediaRecorder.addEventListener('dataavailable', async (event) => {
+      //     chunks = event.data;
+      //     socketRef.current.send(event.data);
+      //     setBotState("Processing...");
+      //     console.log(chunks);
+      // });
+
+      // mediaRecorder.start();
+      // setBotState("Listening...");
+
+      // let isSpeaking = true; // Flag to track if the user is speaking
+
+      // // Set a timeout to stop recording after 5 seconds
+      // setTimeout(() => {
+      //     mediaRecorder.stop();
+      //     isSpeaking = false; // User has stopped speaking
+      //     setBotState("Sending data...");
+      //     if(socketRef.current.readyState === 1){
+      //         console.log(chunks);
+      //     }else{
+      //         console.log("failed");
+      //     }
+      // }, 10000); // Stop recording after 5 seconds
+
+      // mediaRecorderRef.current = mediaRecorder;
+    });
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  return ReactDOM.createPortal(
+    <div className="assistant_wrap">
+      <div className="bot_box">
+        <button
+          className={`bot_img ${botState === "Click to Reload" && "rotate"}`}
+          disabled={botState !== "Click to Reload"}
+          onClick={createSocket}
+        >
+          <GiRobotAntennas size={40} />
+        </button>
+        {/* <button onClick={startRecording}>Start Recording</button>
                 <button onClick={stopRecording}>Stop Recording</button> */}
-                <p>{botState}</p>
-            </div>
-        </div>
-    , document.getElementById("assistant-hook") )
+        <p>{botState}</p>
+      </div>
+      <audio id="audioPlayer" ref={audioRef} src={audioLink} controls onEnded={handleEnded}>
+            Your browser does not support the audio element.
+      </audio>
+    </div>,
+    document.getElementById("assistant-hook")
+  );
 }
