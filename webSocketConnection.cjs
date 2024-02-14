@@ -103,7 +103,8 @@ wss.on('connection', (ws) => {
     // Check if the buffer is not empty
     if (decodedBuffer) {
       console.log('Processing buffer:', decodedBuffer);
-      keywordGenerator(decodedBuffer);
+      // keywordGenerator(decodedBuffer);
+      keyGenPerplex(decodedBuffer);
       // Call your processing function here (e.g., keyword extraction)
       decodedBuffer = ''; // Clear the buffer after processing
     }
@@ -194,69 +195,109 @@ wss.on('connection', (ws) => {
     }
   }
 
-//   const keyGenPerplex = (payload) => {
-//     sdk.post_chat_completions({
-//       model: 'llama-2-70b-chat',
-//       messages: [
-//         {role: 'system', content: `You are a voice assistant for my e - commerce company, named ecom. 
-//         user is going to send you raw voice data in text format, which contains repeated lines similar to each other
-//         from which you have to create a sentence out of data what user want to say.
-//         Now from that sentence you have to put it in three types( query, navigation, search)
-//         you have choose what user want out of this three
-//         - query means user wants to know about something like company or contacts info etc then you have explain him in brief.
-//         - navigation means user want to navigate to  one of the pages of website
-//         - search means user want to search for product/item/catogary/brand on website
-//         now you have to send me response strictly as i say 
-//         if type is "query" then ,
-//         first word should be "query" and then after it the response you have generated.
-//         Example "query: we are the ecom.com we are ..."
-//         if type is "navigation" then,
-//         i want only two words first "navigation"  second should be path of page nothing else.
-//         This is the list of all navigations of my website, match with element and return path, path should be strictly out 
-//         of this do not send anything out of these paths and if you cant match send *. Example "navigation: *".
-//         if user is querying about some page navigate him to that page instead of query. example user is query about
-//         forgotten password instead of explaining just send him to forgot password page. Dont explain user to how to go 
-//         certain page instead navigate him to that page.
-//         Navigation path must be from this array strictly nothing out of this array will be tollerated.
-//         [     {  path="/" element=Home }
-//                 {path="/categories" element=Categories }
-//                 {path="/cart" element=CartPage }
-//                 {path="/search" element=Search}
-//                 {path="/dashboard/user" element=Dashboard}
-//                 {path="/dashboard/user/orders" element=Orders}
-//                 {path="/dashboard/user/profile" element=profile}
-//                 {path="/register" element=register}
-//                 {path="/forgot-password" element=forgot-password}
-//                 {path="/login" element=login}      
-//                 {path="/about" element=about}  
-//                 {path="/contact" element=contact}  
-//                 {path="/policy" element=policy}  
-//         ]
-//         Example if your ask for home screen page send "navigation: /" 
-//         if type is "search" then
-//         i want first word to be "search" and next words should be brand name/product name/ product category  you get from data only one of them also size of response should not be greater then 3 words
-//         Exapmle "search: iphone 11"
+  const keyGenPerplex = (payload) => {
+    sdk.post_chat_completions({
+      model: 'llama-2-70b-chat',
+      messages: [
+        {role: 'system', content: `You are a voice assistant for my e - commerce company, named ecom. 
+        user is going to send you raw voice data in text format, which contains repeated lines similar to each other
+        from which you have to create a sentence out of data what user want to say.
+        Now from that sentence you have to put it in three types( query, navigation, search)
+        you have choose what user want out of this three
+        - query means user wants to know about something like company or contacts info etc then you have explain him in brief.
+        - navigation means user want to navigate to  one of the pages of website
+        - search means user want to search for product/item/catogary/brand on website
+        now you have to send me response strictly as i say 
+        if type is "query" then ,
+        first word should be "query" and then after it the response you have generated.
+        Example "query: we are the ecom.com we are ..."
+        if type is "navigation" then,
+        i want only two words first "navigation"  second should be path of page nothing else.
+        This is the list of all navigations of my website, match with element and return path, path should be strictly out 
+        of this do not send anything out of these paths and if you cant match send *. Example "navigation: *".
+        if user is querying about some page navigate him to that page instead of query. example user is query about
+        forgotten password instead of explaining just send him to forgot password page. Dont explain user to how to go 
+        certain page instead navigate him to that page.
+        Navigation path must be from this array strictly nothing out of this array will be tollerated.
+        [     {  path="/" element=Home }
+                {path="/categories" element=Categories }
+                {path="/categories/electronics-and-home-appliances" element=Electronics & Home Appliances }
+                {path="/cart" element=CartPage }
+                {path="/search" element=Search}
+                {path="/dashboard/user" element=Dashboard}
+                {path="/dashboard/user/orders" element=Orders}
+                {path="/dashboard/user/profile" element=profile}
+                {path="/register" element=register}
+                {path="/forgot-password" element=forgot-password}
+                {path="/login" element=login}      
+                {path="/about" element=about}  
+                {path="/contact" element=contact}  
+                {path="/policy" element=policy}  
+        ]
+        Example if your ask for home screen page send "navigation: /" 
+        
+        [
+        {path="/category/electronics-and-home-appliances" category=Electronics & Home Appliances}
+        {path="/category/clothing-and-apparel" category=clothing-and-apparel}
+        {path="/category/home-and-furniture" category=home-and-furniture}
+        {path="/category/beauty-and-personal-care" category=beauty-and-personal-care}
+        {path="/category/books-and-stationery" category=books-and-stationery}
+        {path="/category/sports-and-outdoors" category=sports-and-outdoors}
+        {path="/category/toys-and-games" category=toys-and-games} 
+        {path="/category/health-and-wellness" category=health-and-wellness}
+        {path="/category/jewelry-and-accessories" category=jewelry-and-accessories}
+        {path="/category/automotive" category=automotive}
+        {path="/category/musical-instruments" category=musical-instruments}
+        {path="/category/gym-equipment's-and-accessories" category=gym-equipment's-and-accessories}
+        {path="/category/home-decor" category=home-decor}
+        {path="/category/tools-and-home-improvement-equipment's" category=tools-and-home-improvement-equipment's}
+        ]
+        if type is "search" then
+        i want first word to be "search" and next words should be brand name/product name/ product category  you get from data only one of them also size of response should not be greater then 3 words
+        if you have got brand name or product name then , return these Exapmle "search: iphone 11"
+        and if you got category name then return a path from above categories Example "navigation: /category/tools-and-home-improvement-equipment's"
+        if user is looking for some categories of products like electronics or sports or tools then return navigation path in navigation format instead of sending query. 
+        only return search type if you are sure that you got brand name or item name else match them to category and return catory path also return exact path character by character do not make mistakes
+        also do not mix categories each category is different do not merge them return only one path out of the given paths.
 
-//         sent any one respone of three types which best matches, do not sent anything else other than the responses i mentioned, if you can't find anything return "nothing"
-//         you are sending other information with data
-//         the response can only be one "search: iphone 11" or "navigation: /" or "query: we are the ecom.com we are ..." or "nothing" and must not include anything else.
-//         `},
-//         {role: 'user', content: payload}
-//       ]
-//     })
-//       .then(({ data }) => {
-//         if( data && data.choices && data.choices[0] && data.choices[0].message){
-//           const result = data.choices[0].message.content;
-//           console.log(result);
-//           // if( result !== "repeat"){
-//           //   ws.send(result);
-//           // }
-//         }
-//       })
-//       .catch(err => console.error(err));
-//   }
+        sent any one respone of three types which best matches, do not sent anything else other than the responses i mentioned, if you can't find anything return "nothing"
+        you are sending other information with data
+        the response can only be one "search: iphone 11" or "navigation: /" or "query: we are the ecom.com we are ..." or "nothing" and must not include anything else.
+        `},
+        {role: 'user', content: payload}
+      ]
+    })
+      .then( async ({ data }) => {
+        if( data && data.choices && data.choices[0] && data.choices[0].message){
+          const result = data.choices[0].message.content;
+          console.log(result);
+          const spaceIndex = result.indexOf(" ");
+          const type = result.substring(0, spaceIndex);
+          const mainCont = result.substring(spaceIndex + 1).trim();
+  
+          if(type === "query:"){
+  
+            // const stream = await PlayHT.stream(mainCont, {
+            //   voiceEngine: 'PlayHT2.0-turbo',
+            //   voiceId: 's3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json',
+            //   outputFormat: 'mp3',
+            // });
+            const generated = await PlayHT.generate(mainCont, {
+              outputFormat: 'mp3',
+            });
+            const { audioUrl } = generated;
+            ws.send(audioUrl);
+            ws.send(result);
+            console.log(audioUrl);
+          }else{
+            ws.send(result);
+          }
+        }
+      })
+      .catch(err => console.error(err));
+  }
 
- });
+});
 
 
 

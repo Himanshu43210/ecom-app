@@ -17,16 +17,16 @@ const Search = () => {
       try {
         // Get the value of the 'title' query parameter from the URL
         const titleFromUrl = getQueryParam("title");
-
+        const searchTerm = await titleFromUrl.replace(/_/g, " ");
         // If the title is present in the URL, make the API call
         if (titleFromUrl) {
           const { data } = await axios.get(
             "https://ecom-app-cyaw.onrender.com" +
-            `/api/v1/product/search/${titleFromUrl}`
+            `/api/v1/product/search/${searchTerm}`
           );
 
           // Update state with the keyword and results
-          setValues({ keyword: titleFromUrl, results: data });
+          setValues({ keyword: searchTerm, results: data });
         }
       } catch (error) {
         console.log(error);
