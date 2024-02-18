@@ -260,14 +260,23 @@ export const productListController = async (req, res) => {
 // search product
 export const searchProductController = async (req, res) => {
   try {
-    const { keyword } = req.params;
+    let { keyword } = req.params;
+    keyword = await keyword.replace(/\d+/g, '').trim().replace(/\s+/g, ' ');
+    const keywords = await keyword.split(" ");
+    const regexPatterns = await keywords.map(k => new RegExp(k, "i"));
+
+    const conditions =  await regexPatterns.map(pattern => ({
+      $or: [
+          { name: { $regex: pattern } },
+          { description: { $regex: pattern } },
+      ]
+  }));
+  
+  // Combine conditions with $or operator
+  const combinedCondition = { $or: conditions };
+
     const resutls = await productModel
-      .find({
-        $or: [
-          { name: { $regex: keyword, $options: "i" } },
-          { description: { $regex: keyword, $options: "i" } },
-        ],
-      })
+      .find(combinedCondition)
       .select("-photo");
     res.json(resutls);
   } catch (error) {

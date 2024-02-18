@@ -9,8 +9,6 @@ import { GiRobotAntennas } from "react-icons/gi";
 
 export default function Affirmation() {
 
-  const [affirmation, setAffirmation] = useState("");
-  const [finalAffirmation, setFinalAffirmation] = useState(false);
   const [result, setResult] = useState(null);
   const socketRef = useRef();
   const mediaRecorderRef = useRef(null);
@@ -20,10 +18,9 @@ export default function Affirmation() {
   const [botState, setBotState] = useState("Connecting...");
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const responeData = useSelector((state) => state.assistant.assistResponses);
 
-  const handleChange = (e) => {
-    setAffirmation(e.target.value);
-  };
+  console.log(responeData);
 
 //   const readOutAffirmation = (mainCont) => {
 //     speakerOnRef.current = true;
@@ -82,20 +79,24 @@ export default function Affirmation() {
         const mainCont = transcript.substring(spaceIndex + 1).trim();
 
         if(transcript === "failed"){
-            createSocket();
+            //createSocket();
+            setBotState("Click to Reload");
             return;
         }
 
         if (type === "navigation:") {
+          dispatch(assistantActions.fetchResponse("Navigating to - " + mainCont));
           navigate(mainCont);
         } else if (type === "search:") {
-            navigate(`/search?title=${mainCont}`);
+          dispatch(assistantActions.fetchResponse("Searching for : " + mainCont));
+          const encodedSearchTerm = mainCont.replace(/ /g, "_");
+          navigate(`/search?title=${encodedSearchTerm}`);
+        }else if (type === "query:") {
+          dispatch(assistantActions.fetchResponse(mainCont));
         } else {
             setAudioLink(transcript);
         }
         console.log(transcript);
-        setAffirmation(transcript);
-        dispatch(assistantActions.fetchResponse(transcript));
         setBotState("Complteted");
       }
     };
