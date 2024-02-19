@@ -264,6 +264,7 @@ wss.on('connection', (ws) => {
         sent any one respone of three types which best matches, do not sent anything else other than the responses i mentioned, if you can't find anything return "nothing"
         you are sending other information with data
         the response can only be one "search: iphone 11" or "navigation: /" or "query: we are the ecom.com we are ..." or "nothing" and must not include anything else.
+        Do not send any response without declaring its type if you can't put it in any type, then put it in "query:" type and then send response. This should be top priority. 
         `},
         {role: 'user', content: payload}
       ]
