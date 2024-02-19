@@ -22,7 +22,8 @@ sdk.auth(process.env.PPLX_API_KEY);
 
 // Add WebSocket 
 const WebSocket = require('ws')
-const wss = new WebSocket.Server({ port: 3002 })
+const PORT = process.env.PORT || 3002;
+const wss = new WebSocket.Server({ port: PORT })
 let decodedBuffer = ''; // Buffer to store decoded text
 let silenceTimer = null; // Timer to track silence duration
 let wsIsOpen = true;
