@@ -63,7 +63,7 @@ export default function Affirmation() {
 
   const createSocket = () => {
     console.log("create socket called");
-    const socket = new WebSocket("ws://localhost:3002");
+    const socket = new WebSocket("wss://voice-bot-j2u7.onrender.com");//https://voice-bot-j2u7.onrender.com
     socket.onopen = () => {
       console.log({ event: "onopen" });
       setBotState("Ready!");
@@ -80,6 +80,7 @@ export default function Affirmation() {
 
         if(transcript === "failed"){
             //createSocket();
+            socketRef.current.close();
             setBotState("Click to Reload");
             return;
         }
