@@ -23,6 +23,7 @@ sdk.auth(process.env.PPLX_API_KEY);
 // Add WebSocket 
 const WebSocket = require('ws')
 const PORT = process.env.PORT || 3002;
+// const PORT = 3002;
 const wss = new WebSocket.Server({ port: PORT })
 let decodedBuffer = ''; // Buffer to store decoded text
 let silenceTimer = null; // Timer to track silence duration
@@ -104,8 +105,8 @@ wss.on('connection', (ws) => {
     // Check if the buffer is not empty
     if (decodedBuffer) {
       console.log('Processing buffer:', decodedBuffer);
-      // keywordGenerator(decodedBuffer);
-      keyGenPerplex(decodedBuffer);
+      keywordGenerator(decodedBuffer);
+      // keyGenPerplex(decodedBuffer);
       // Call your processing function here (e.g., keyword extraction)
       decodedBuffer = ''; // Clear the buffer after processing
     }
@@ -123,10 +124,11 @@ wss.on('connection', (ws) => {
       const userQuery = payload;
       const prompt = `You are a voice assistant for my e - commerce company, named ecom. 
       I am going to send you raw voice data in text format from which you have to create a sentence out of data what user want to say.
-      Now from that sentence you have to put it in three types( query, navigation, search)
-      you have choose what user want out of this three
+      Now from that sentence you have to put it in four types( query, navigation, categories, search product/brand)
+      you have choose what user want out of this four
        - query means user wants to know about something like company or contacts info etc then you have explain him in brief.
       - navigation means user want to navigate to  one of the pages of website
+      - categories means user is looking for particular section or categories of product like electronics, phones, tools etc.
       - search means user want to search for product/item/catogary/brand on website
       now you have to send me response strictly as i say 
       if type is "query" then ,
@@ -155,10 +157,36 @@ wss.on('connection', (ws) => {
               {path="/policy" element=policy}  
       ]
       Example if your ask for home screen page send "navigation: /" 
+
+      if type is "categories" then
+      i want only two words first "navigation" second should be path of categories nothing else.
+      This is the list of all categorise of products on my website, match with category and return path, path should be strictly out 
+      of this do not send anything out of these paths and if you cant match then move to search type.
+      Category path must be from this array strictly nothing out of this array will be tollerated.
+      [
+        {path="/category/electronics-and-home-appliances"}
+        {path="/category/clothing-and-apparel"}
+        {path="/category/home-and-furniture"}
+        {path="/category/beauty-and-personal-care"}
+        {path="/category/books-and-stationery"}
+        {path="/category/sports-and-outdoors"}
+        {path="/category/toys-and-games"} 
+        {path="/category/health-and-wellness" }
+        {path="/category/jewelry-and-accessories"}
+        {path="/category/automotive"}
+        {path="/category/musical-instruments"}
+        {path="/category/gym-equipment's-and-accessories"}
+        {path="/category/home-decor"}
+        {path="/category/tools-and-home-improvement-equipment's"}
+      ]
+      Example "categories: /category/tools-and-home-improvement-equipment's"
+
       if type is "search" then
-      i want first word to be "search" and next words should be brand name/product name/ product category  you get from data only one of them also size of response should not be greater then 3 words
-      Exapmle "search: iphone 11"
-      
+      i want first word to be "search" and next words should be brand name/product name you get from data only one of them also size of response should not be greater then 3 words
+      Exapmle "search: iphone 11".
+
+      Do not send anything else with response like note, explaination etc. This is the most important 
+      thing you should remember.
       voice data - ${payload}`;
   
       const response = await openai.chat.completions.create({
@@ -184,8 +212,9 @@ wss.on('connection', (ws) => {
             outputFormat: 'mp3',
           });
           const { audioUrl } = generated;
-          ws.send(audioUrl);
-          console.log(audioUrl);
+            ws.send(audioUrl);
+            ws.send(result);
+            console.log(audioUrl);
         }else{
           ws.send(result);
         }
