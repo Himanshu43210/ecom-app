@@ -81,6 +81,7 @@ export default function Affirmation() {
         if(transcript === "failed"){
             //createSocket();
             socketRef.current.close();
+            handleEnded();
             setBotState("Click to Reload");
             return;
         }
