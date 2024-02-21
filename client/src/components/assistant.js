@@ -63,7 +63,7 @@ export default function Affirmation() {
 
   const createSocket = () => {
     console.log("create socket called");
-    const socket = new WebSocket("wss://voice-bot-j2u7.onrender.com");//https://voice-bot-j2u7.onrender.com
+    const socket = new WebSocket("wss://voice-bot-j2u7.onrender.com");// "ws://localhost:3002" | "wss://voice-bot-j2u7.onrender.com"
     socket.onopen = () => {
       console.log({ event: "onopen" });
       setBotState("Ready!");
@@ -77,6 +77,7 @@ export default function Affirmation() {
         const spaceIndex = transcript.indexOf(" ");
         const type = transcript.substring(0, spaceIndex);
         const mainCont = transcript.substring(spaceIndex + 1).trim();
+        const linkCheck = transcript.slice(0, 5);
 
         if(transcript === "failed"){
             //createSocket();
@@ -85,18 +86,23 @@ export default function Affirmation() {
             setBotState("Click to Reload");
             return;
         }
-
+        
         if (type === "navigation:") {
+          dispatch(assistantActions.fetchResponse("Navigating to - " + mainCont));
+          navigate(mainCont);
+        } else if (type === "categories:") {
           dispatch(assistantActions.fetchResponse("Navigating to - " + mainCont));
           navigate(mainCont);
         } else if (type === "search:") {
           dispatch(assistantActions.fetchResponse("Searching for : " + mainCont));
           const encodedSearchTerm = mainCont.replace(/ /g, "_");
           navigate(`/search?title=${encodedSearchTerm}`);
-        }else if (type === "query:") {
+        } else if (type === "query:") {
           dispatch(assistantActions.fetchResponse(mainCont));
-        } else {
-            setAudioLink(transcript);
+        } else if (linkCheck === "https") {
+          setAudioLink(transcript);
+        }else {
+          console.log(linkCheck);
         }
         console.log(transcript);
         setBotState("Complteted");
