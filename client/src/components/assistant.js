@@ -124,16 +124,27 @@ export default function Affirmation() {
   };
 
   const startRecording = () => {
+    
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    console.log(isSafari);
+    console.log(navigator.userAgent);
+
+    let audioFormat = "audio/webm";
+
+    if(isSafari){
+      audioFormat = "audio/mp4";
+    }
+
     // Add microphone access
     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      if (!MediaRecorder.isTypeSupported("audio/webm")) {
+      if (!MediaRecorder.isTypeSupported(audioFormat)) {
         return alert("Browser not supported");
       }
 
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm",
+        mimeType: audioFormat,
       });
-
+  
       mediaRecorder.addEventListener("dataavailable", async (event) => {
         if (event.data.size > 0 && socketRef.current.readyState === 1 && !speakerOnRef.current) {
           console.log(event.data);
