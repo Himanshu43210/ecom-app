@@ -124,6 +124,7 @@ wss.on('connection', (ws) => {
       const userQuery = payload;
       const prompt = `You are a voice assistant for my e - commerce company, named ecom. 
       I am going to send you raw voice data in text format from which you have to create a sentence out of data what user want to say.
+      The voice data may contains same sentence multiple time, create a best sentence out of that data.
       Now from that sentence you have to put it in four types( query, navigation, categories, search product/brand)
       you have choose what user want out of this four
        - query means user wants to know about something like company or contacts info etc then you have explain him in brief.

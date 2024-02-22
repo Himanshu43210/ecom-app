@@ -19,6 +19,8 @@ export default function Affirmation() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const responeData = useSelector((state) => state.assistant.assistResponses);
+  const [resMsg, setResMsg] = useState("");
+  const [showRes, setShowRes] = useState(false);
 
   console.log(responeData);
 
@@ -38,7 +40,20 @@ export default function Affirmation() {
 //   };
 
   useEffect(() => {
+    if(resMsg !== "" && resMsg[0] !== ":"){
+      setShowRes(true);
+
+      const timer = setTimeout(() => {
+        setShowRes(false);
+      }, 5000); // 5 seconds for nav and serch 10sec for query.
+
+      return () => clearTimeout(timer);
+    }
+  }, [resMsg])
+
+  useEffect(() => {
     if(audioLink){
+        setShowRes(true);
         speakerOnRef.current = true;
         audioRef.current.play();
     }
@@ -46,6 +61,7 @@ export default function Affirmation() {
 
   const handleEnded = () => {
     speakerOnRef.current = false;
+    setShowRes(false);
   };
 
   useEffect(() => {
@@ -89,20 +105,25 @@ export default function Affirmation() {
         
         if (type === "navigation:") {
           dispatch(assistantActions.fetchResponse("Navigating to - " + mainCont));
+          setResMsg("Navigating to - " + mainCont);
           navigate(mainCont);
         } else if (type === "categories:") {
           dispatch(assistantActions.fetchResponse("Navigating to - " + mainCont));
+          setResMsg("Navigating to - " + mainCont);
           navigate(mainCont);
         } else if (type === "search:") {
           dispatch(assistantActions.fetchResponse("Searching for : " + mainCont));
+          setResMsg("Searching for : " + mainCont);
           const encodedSearchTerm = mainCont.replace(/ /g, "_");
           navigate(`/search?title=${encodedSearchTerm}`);
         } else if (type === "query:") {
           dispatch(assistantActions.fetchResponse(mainCont));
+          setResMsg(":- " +mainCont);
         } else if (linkCheck === "https") {
           setAudioLink(transcript);
         }else {
           console.log(linkCheck);
+          setResMsg("Pls try again, unable to understand query.");
         }
         console.log(transcript);
         setBotState("Complteted");
@@ -197,13 +218,14 @@ export default function Affirmation() {
 
   return ReactDOM.createPortal(
     <div className="assistant_wrap">
+      <div className={`response_box ${showRes && "response_box_On"} `}>{resMsg}</div>
       <div className="bot_box">
         <button
           className={`bot_img ${botState === "Click to Reload" && "rotate"}`}
           disabled={botState !== "Click to Reload"}
           onClick={createSocket}
         >
-          <GiRobotAntennas size={40} />
+          <GiRobotAntennas size={40}/>
         </button>
         {/* <button onClick={startRecording}>Start Recording</button>
                 <button onClick={stopRecording}>Stop Recording</button> */}
