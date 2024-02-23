@@ -219,9 +219,9 @@ export default function Affirmation() {
   return ReactDOM.createPortal(
     <div className="assistant_wrap">
       <div className={`response_box ${showRes && "response_box_On"} `}>{resMsg}</div>
-      <div className="bot_box">
+      <div className={`bot_box`}>
         <button
-          className={`bot_img ${botState === "Click to Reload" && "rotate"}`}
+          className={`bot_img ${botState === "Click to Reload" && "rotate"} ${(botState === "Listening...") && "bot_img_listen" } `}
           disabled={botState !== "Click to Reload"}
           onClick={createSocket}
         >
